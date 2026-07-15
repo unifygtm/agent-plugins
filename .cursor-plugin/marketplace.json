@@ -1,0 +1,12 @@
+{
+  "name": "unify-plugins",
+  "owner": { "name": "Unify", "email": "support@unifygtm.com" },
+  "metadata": { "description": "Official Unify plugins for Cursor" },
+  "plugins": [
+    {
+      "name": "unify",
+      "source": "./unify",
+      "description": "Run Unify's GTM agent from your coding agent — build lists, enrich contacts, and launch outreach"
+    }
+  ]
+}

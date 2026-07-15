@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "unify": {
+      "type": "http",
+      "url": "https://mcp.unifygtm.com/mcp",
+      "oauth": {
+        "clientId": "o32T8irkR9ykR3VV5lb0ULclZcLylMzf",
+        "callbackPort": 53233
+      }
+    }
+  }
+}

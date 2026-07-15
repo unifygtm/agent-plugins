@@ -1,0 +1,20 @@
+{
+  "name": "unify",
+  "version": "0.1.0",
+  "description": "Run Unify's GTM agent from Codex — build company and people lists, enrich emails and phone numbers, and launch sequences and tasks.",
+  "author": { "name": "Unify", "url": "https://www.unifygtm.com" },
+  "homepage": "https://www.unifygtm.com",
+  "repository": "https://github.com/unifygtm/agent-plugins",
+  "license": "MIT",
+  "keywords": ["unify", "gtm", "sales", "prospecting", "enrichment", "outbound", "crm"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Unify",
+    "shortDescription": "GTM workflows with Unify agents",
+    "longDescription": "Skills for driving Unify's go-to-market agent: discover companies and people, enrich contact data, and run outreach sequences and tasks from your coding agent.",
+    "developerName": "Unify",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://www.unifygtm.com"
+  }
+}

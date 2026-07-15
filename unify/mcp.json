@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "unify": {
+      "url": "https://mcp.unifygtm.com/mcp",
+      "auth": {
+        "CLIENT_ID": "HbfBtDL1ZK7xYNq1tCHtmi7VUMe8yfW8"
+      }
+    }
+  }
+}

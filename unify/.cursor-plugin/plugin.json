@@ -1,0 +1,12 @@
+{
+  "name": "unify",
+  "version": "0.1.0",
+  "description": "Run Unify's GTM agent from Cursor — build company and people lists, enrich emails and phone numbers, and launch sequences and tasks.",
+  "author": { "name": "Unify" },
+  "homepage": "https://www.unifygtm.com",
+  "repository": "https://github.com/unifygtm/agent-plugins",
+  "license": "MIT",
+  "keywords": ["unify", "gtm", "sales", "prospecting", "enrichment", "outbound", "crm"],
+  "skills": ["./skills"],
+  "mcpServers": "./mcp.json"
+}

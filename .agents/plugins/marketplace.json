@@ -1,0 +1,12 @@
+{
+  "name": "unify-plugins",
+  "interface": { "displayName": "Unify" },
+  "plugins": [
+    {
+      "name": "unify",
+      "source": { "source": "local", "path": "./unify" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity"
+    }
+  ]
+}
