@@ -148,6 +148,13 @@ install_claude() {
 }
 
 authenticate_claude() {
+  if [[ ! -t 0 ]]; then
+    log "Skipping automatic sign-in for Claude Code (no interactive terminal)"
+    printf 'The Unify plugin is installed. To finish sign-in:\n'
+    printf '  1. Fully restart Claude Code.\n'
+    printf '  2. Run the /mcp command and complete the Unify browser login flow.\n'
+    return
+  fi
   log "Signing in to Unify for Claude Code"
   claude mcp login "plugin:$PLUGIN:$MCP_SERVER"
 }
@@ -171,6 +178,13 @@ install_cursor() {
 
 authenticate_cursor() {
   local auth_dir
+  if [[ ! -t 0 ]]; then
+    log "Skipping automatic sign-in for Cursor (no interactive terminal)"
+    printf 'The Unify plugin is installed. To finish sign-in:\n'
+    printf '  1. Fully restart Cursor.\n'
+    printf '  2. Enable and sign in to the Unify MCP server from Settings -> Plugins (or the MCP panel).\n'
+    return
+  fi
   require_command cursor-agent
   ensure_temp_dir
   auth_dir="$TEMP_DIR/cursor-auth"
