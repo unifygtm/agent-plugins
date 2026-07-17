@@ -1,57 +1,84 @@
 # Getting started with Unify
 
-This guide installs the Unify plugin in your agent, connects the Unify MCP
-server, signs you in, and verifies the tools work. The plugin is the same across
-agents; only the install and sign-in steps differ.
+The setup script installs the Unify plugin, starts sign-in when the agent's
+plugin includes the Unify MCP server, and leaves only an agent restart to load
+the new plugin.
 
-**First, identify which agent you are running in**, then follow that section:
+## Run setup now
 
-- **Claude Code**: Anthropic's CLI and IDE agent (uses `/plugin` and `/mcp` commands).
-- **Cursor**: the Cursor editor (plugins under Customize, MCP under Settings).
-- **Codex**: OpenAI's Codex agent (the `codex` CLI and Plugins UI).
+If you are an agent reading this file, run the following command. The script
+detects whether you are Claude Code, Cursor, or Codex.
 
-## Claude Code
-
-1. Install the plugin:
-
-   ```
-   /plugin marketplace add unifygtm/agent-plugins
-   /plugin install unify@unify-plugins
-   ```
-
-   (or `claude plugin marketplace add unifygtm/agent-plugins && claude plugin install unify@unify-plugins`).
-
-2. Connect and sign in: run `/mcp`, select the `unify` server, and choose
-   **Authenticate**. A browser window opens; sign in with your Unify account and
-   pick your workspace when prompted, then return to the agent.
-
-3. Verify (see [Verify it works](#verify-it-works) below).
-
-## Cursor
-
-1. Install **Unify** from the plugin marketplace (Customize → Plugins). For local
-   development, clone this repo into `~/.cursor/plugins/local/`.
-
-2. Connect and sign in: open Settings → MCP, find `unify`, and click **Login**.
-   Sign in with your Unify account and pick your workspace when prompted.
-
-3. Verify (see [Verify it works](#verify-it-works) below).
-
-## Codex
-
-```
-codex plugin marketplace add unifygtm/agent-plugins
+```bash
+curl -fsSL https://raw.githubusercontent.com/unifygtm/agent-plugins/main/scripts/setup.sh | bash
 ```
 
-Then install **unify** from the Plugins UI. The Codex plugin currently ships
-**skills only**; the remote MCP server is not yet wired into it, so the Unify
-agent tools are not available in Codex.
+The installer starts browser authentication when the plugin includes the Unify
+MCP server. Wait for the user to complete that browser flow, then tell them to
+restart the current agent when the script finishes.
+
+Automatic detection uses the current agent's environment and parent process.
+If the script reports that it could not detect the agent, tell the user to run
+the matching fallback command in their terminal. For Claude Code, provide:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/unifygtm/agent-plugins/main/scripts/setup.sh | bash -s -- claude
+```
+
+Use `cursor` or `codex` instead when running in those agents. The user can also
+use `all` to install for all three agents, or put `--no-auth` before the agent
+name to skip browser sign-in.
+
+## What the script does
+
+### Claude Code
+
+The script uses Claude Code's non-interactive shell commands to add the Unify
+marketplace and install `unify@unify-plugins` at user scope. It then runs
+`claude mcp login plugin:unify:unify` to sign in. It does not use `/plugin` or
+`/mcp` slash commands.
+
+### Cursor
+
+Cursor does not provide a plugin-install CLI. The script installs the complete
+plugin under `~/.cursor/plugins/local/unify`, which is Cursor's supported local
+plugin directory. It uses a temporary project MCP configuration to run
+`cursor-agent mcp enable unify` and `cursor-agent mcp login unify`; the temporary
+configuration is removed after sign-in, so it does not duplicate the MCP server
+bundled with the plugin.
+
+An organization can disable local plugin imports. If Unify does not appear in
+Settings -> Plugins after restarting Cursor, ask a Cursor administrator to
+allow user-local plugin imports or add `unifygtm/agent-plugins` as a team
+marketplace.
+
+### Codex
+
+The script uses `codex plugin marketplace add` and `codex plugin add`, so no
+Plugins UI is required. The Codex plugin currently includes Unify skills only;
+the remote MCP tools are not yet included in the Codex plugin.
+
+## Finish and verify
+
+Fully restart each agent after the script completes. A new chat in an existing
+process may not reload plugins or MCP servers.
+
+After restarting Claude Code or Cursor, ask:
+
+```
+What can I do with Unify?
+```
+
+The agent should use the Unify skill and show the available discovery,
+enrichment, outreach, CRM, agent-run, and DataTable workflows.
 
 ## Troubleshooting
 
-| Symptom                                          | Fix                                                                                       |
-| ------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| Tools missing entirely                           | Confirm the plugin installed, then restart the agent.                                     |
-| Signed in, but tools still fail                  | Restart the agent session so it reconnects to the server.                                 |
-| Auth errors after signing in                     | Sign in again, and be sure to select your Unify workspace when prompted.                  |
-| "workspace does not have chat funding available" | Billing gate on your Unify workspace; ask a workspace admin to check the plan or credits. |
+| Symptom                                          | Fix                                                                                    |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| An agent CLI is not found                        | Install that agent or run the script only for agents already installed on the machine. |
+| Tools are missing after setup                    | Fully quit and restart the agent.                                                      |
+| Cursor does not show the plugin                  | Confirm the organization allows user-local plugin imports.                             |
+| Authentication was skipped or failed             | Re-run the same setup command, or omit `--no-auth`. The install steps are idempotent.  |
+| Signed in, but tools still fail                  | Restart the agent so its MCP process reloads the stored session.                       |
+| "workspace does not have chat funding available" | Ask a Unify workspace admin to check the workspace plan or credits.                    |
