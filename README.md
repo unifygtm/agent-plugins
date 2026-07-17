@@ -19,10 +19,16 @@ enrich contact data, and engage prospects with sequences and tasks, all from nat
 
 ## Getting started
 
-Paste this into the agent you want to set up:
+Copy this prompt into your the agent of choice:
 
 ```
-Read https://raw.githubusercontent.com/unifygtm/agent-plugins/main/GETTING_STARTED.md and follow the instructions to install the unify plugin
+Read https://raw.githubusercontent.com/unifygtm/agent-plugins/main/GETTING_STARTED.md and follow to setup the unify plugin.
 ```
 
-Or follow [GETTING_STARTED.md](GETTING_STARTED.md) directly.
+or run the setup script directly.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/unifygtm/agent-plugins/main/scripts/setup.sh | bash
+```
+
+See [GETTING_STARTED.md](GETTING_STARTED.md) for agent-specific details.
