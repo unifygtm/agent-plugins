@@ -1,8 +1,8 @@
 # Getting started with Unify
 
-The setup script installs the Unify plugin, starts sign-in when the agent's
-plugin includes the Unify MCP server, and leaves only an agent restart to load
-the new plugin.
+The setup script installs the Unify plugin non-interactively, then hands you an
+interactive sign-in command when the agent's plugin includes the Unify MCP
+server, and leaves only an agent restart to load the new plugin.
 
 ## Run setup now
 
@@ -13,9 +13,13 @@ detects whether you are Claude Code, Cursor, or Codex.
 curl -fsSL https://raw.githubusercontent.com/unifygtm/agent-plugins/main/scripts/setup.sh | bash
 ```
 
-The installer starts browser authentication when the plugin includes the Unify
-MCP server. Wait for the user to complete that browser flow, then tell them to
-restart the current agent when the script finishes.
+Browser sign-in needs a real interactive terminal (TTY), which a piped
+`curl … | bash` does not provide (stdin is the script, not a keyboard). So the
+installer runs the install steps non-interactively and does not attempt to sign
+in. When the plugin includes the Unify MCP server, tell the user to finish
+sign-in through the agent itself: fully restart the agent, then run the agent's
+MCP login flow (in Claude Code, the `/mcp` command) and complete the Unify
+browser login there.
 
 Automatic detection uses the current agent's environment and parent process.
 If the script reports that it could not detect the agent, tell the user to run
@@ -34,18 +38,23 @@ name to skip browser sign-in.
 ### Claude Code
 
 The script uses Claude Code's non-interactive shell commands to add the Unify
-marketplace and install `unify@unify-plugins` at user scope. It then runs
-`claude mcp login plugin:unify:unify` to sign in. It does not use `/plugin` or
-`/mcp` slash commands.
+marketplace and install `unify@unify-plugins` at user scope. It does not use
+`/plugin` slash command. Sign-in needs a real interactive terminal (TTY), so
+the script signs in with `claude mcp login plugin:unify:unify` only when one is
+present. When run without a TTY (for example, piped from `curl`), it skips
+sign-in and tells the user to restart Claude Code and complete the login flow
+with the `/mcp` command.
 
 ### Cursor
 
 Cursor does not provide a plugin-install CLI. The script installs the complete
 plugin under `~/.cursor/plugins/local/unify`, which is Cursor's supported local
-plugin directory. It uses a temporary project MCP configuration to run
-`cursor-agent mcp enable unify` and `cursor-agent mcp login unify`; the temporary
-configuration is removed after sign-in, so it does not duplicate the MCP server
-bundled with the plugin.
+plugin directory. When run in an interactive terminal it uses a temporary
+project MCP configuration to run `cursor-agent mcp enable unify` and
+`cursor-agent mcp login unify`; the temporary configuration is removed after
+sign-in, so it does not duplicate the MCP server bundled with the plugin.
+Without a TTY it skips sign-in and tells the user to restart Cursor and enable
+and sign in to the Unify MCP server from Settings -> Plugins.
 
 An organization can disable local plugin imports. If Unify does not appear in
 Settings -> Plugins after restarting Cursor, ask a Cursor administrator to
@@ -80,5 +89,6 @@ enrichment, outreach, CRM, agent-run, and DataTable workflows.
 | Tools are missing after setup                    | Fully quit and restart the agent.                                                      |
 | Cursor does not show the plugin                  | Confirm the organization allows user-local plugin imports.                             |
 | Authentication was skipped or failed             | Re-run the same setup command, or omit `--no-auth`. The install steps are idempotent.  |
+| Sign-in was skipped (no interactive terminal)    | Fully restart the agent, then complete the login flow inside it — in Claude Code, the `/mcp` command. |
 | Signed in, but tools still fail                  | Restart the agent so its MCP process reloads the stored session.                       |
 | "workspace does not have chat funding available" | Ask a Unify workspace admin to check the workspace plan or credits.                    |
