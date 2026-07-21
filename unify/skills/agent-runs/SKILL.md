@@ -27,6 +27,10 @@ Statuses: `PENDING` (keep polling), `CLARIFICATION_NEEDED`, `READY`, `ERROR`,
 `NOT_FOUND`. Runs commonly take one to several minutes; poll every ~10 seconds
 initially and back off toward ~30 seconds for long runs. Don't give up; complex
 list-building runs can run 10+ minutes.
+Treat polling as internal tool work. Do not send user-facing messages that
+merely announce polling attempts, waits, cadence changes, or unchanged `PENDING`
+statuses. Only message the user when input is required, the run reaches a
+terminal state, or an actionable blocker occurs.
 
 ## 3. Clarifications: `answer_question({ runId, answers })`
 
