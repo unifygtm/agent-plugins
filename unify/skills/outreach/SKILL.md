@@ -54,8 +54,7 @@ action items. Useful briefs:
 ## Mailbox readiness
 
 Sending requires a connected mailbox. If the agent reports the mailbox isn't
-ready or needs OAuth, direct the user to connect their mailbox in the Unify app,
-then resume.
+ready or needs OAuth, direct the user to connect their mailbox in the Unify app using any links provided in the tool response.
 
 Unify can also analyze a mailbox's sent mail to build a **voice profile** that
 shapes generated copy. When a run kicks that analysis off, check progress with
