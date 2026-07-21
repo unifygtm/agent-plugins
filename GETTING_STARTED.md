@@ -6,7 +6,7 @@ server, and leaves only an agent restart to load the new plugin.
 
 ## Run setup now
 
-If you are an agent reading this file, run the following command. The script
+If you are a terminal based agent reading this file, run the following command. The script
 detects whether you are Claude Code, Cursor, or Codex.
 
 ```bash
@@ -83,12 +83,12 @@ enrichment, outreach, CRM, agent-run, and DataTable workflows.
 
 ## Troubleshooting
 
-| Symptom                                          | Fix                                                                                    |
-| ------------------------------------------------ | -------------------------------------------------------------------------------------- |
-| An agent CLI is not found                        | Install that agent or run the script only for agents already installed on the machine. |
-| Tools are missing after setup                    | Fully quit and restart the agent.                                                      |
-| Cursor does not show the plugin                  | Confirm the organization allows user-local plugin imports.                             |
-| Authentication was skipped or failed             | Re-run the same setup command, or omit `--no-auth`. The install steps are idempotent.  |
+| Symptom                                          | Fix                                                                                                   |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| An agent CLI is not found                        | Install that agent or run the script only for agents already installed on the machine.                |
+| Tools are missing after setup                    | Fully quit and restart the agent.                                                                     |
+| Cursor does not show the plugin                  | Confirm the organization allows user-local plugin imports.                                            |
+| Authentication was skipped or failed             | Re-run the same setup command, or omit `--no-auth`. The install steps are idempotent.                 |
 | Sign-in was skipped (no interactive terminal)    | Fully restart the agent, then complete the login flow inside it — in Claude Code, the `/mcp` command. |
-| Signed in, but tools still fail                  | Restart the agent so its MCP process reloads the stored session.                       |
-| "workspace does not have chat funding available" | Ask a Unify workspace admin to check the workspace plan or credits.                    |
+| Signed in, but tools still fail                  | Restart the agent so its MCP process reloads the stored session.                                      |
+| "workspace does not have chat funding available" | Ask a Unify workspace admin to check the workspace plan or credits.                                   |

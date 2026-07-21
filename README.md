@@ -19,7 +19,9 @@ enrich contact data, and engage prospects with sequences and tasks, all from nat
 
 ## Getting started
 
-Copy this prompt into your the agent of choice:
+### From the Terminal
+
+Copy this prompt into your terminal based agent of choice:
 
 ```
 Read https://raw.githubusercontent.com/unifygtm/agent-plugins/main/GETTING_STARTED.md and follow to setup the unify plugin.
