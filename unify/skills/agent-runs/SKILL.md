@@ -47,12 +47,22 @@ On `CLARIFICATION_NEEDED`, `poll_agent` returns `questions` (up to 4, each with
 
 ## 4. Read: `read_agent_results({ runId })`
 
-Only for `READY` or `ERROR` runs. Returns `{ status, finalAnswer, errorMessage }`.
-`finalAnswer` is plain text. The result's **structured content** carries typed
-resource references with the exact IDs the loader tools require. A DataTable
-reference includes `tableId` + `versionId` (both needed by `load_datatable`), a
-List reference includes its `listId` (for `load_list`), and so on. Take IDs from
-there rather than parsing them out of the prose.
+Only for `READY` or `ERROR` runs. Returns
+`{ status, finalAnswer, content, errorMessage, threadLink }`.
+`finalAnswer` is plain text. The result's **structured content** (`content`)
+carries typed resource references with the exact IDs the loader tools require. A
+DataTable reference includes `tableId` + `versionId` (both needed by
+`load_datatable`), a List reference includes its `listId` (for `load_list`), and
+so on. Take IDs from there rather than parsing them out of the prose.
+
+`threadLink` is a clickable URL to the run's thread in the Unify dashboard, and
+is returned for both `READY` and `ERROR` runs. Always present it to the user
+after relaying results so they can inspect the full thread, intermediate steps,
+and any generated resources in the UI. Include the **bare URL** verbatim — most
+terminals and plain-text clients auto-linkify a raw URL, whereas Markdown link
+syntax (`[View the run](<threadLink>)`) only renders where Markdown is supported.
+If you use a Markdown link for readability, still keep the full URL visible (e.g.
+on its own line) so it stays clickable in clients that don't render Markdown.
 
 ## Errors
 
