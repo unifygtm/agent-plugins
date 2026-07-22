@@ -81,6 +81,55 @@ What can I do with Unify?
 The agent should use the Unify skill and show the available discovery,
 enrichment, outreach, CRM, agent-run, and DataTable workflows.
 
+## Keeping Unify up to date
+
+Re-running the setup command always pulls the latest plugin — when Unify is
+already installed, the script refreshes the marketplace and updates the plugin
+in place. To get updates automatically instead, enable auto-update on the
+`unify-plugins` marketplace.
+
+Third-party marketplaces like `unify-plugins` have auto-update **disabled** by
+default, so you opt in one of two ways.
+
+### Toggle it interactively (Claude Code)
+
+```
+/plugin
+```
+
+Open the **Marketplaces** tab, select **unify-plugins**, and choose **Enable
+auto-update**. Claude Code then refreshes the catalog on startup and updates the
+plugin in the background, prompting you to run `/reload-plugins` when it does.
+
+### Declare it in settings.json
+
+Add the marketplace with `autoUpdate` in your user settings
+(`~/.claude/settings.json`) or a project's `.claude/settings.json` so the
+preference is applied wherever the file is loaded:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "unify-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "unifygtm/agent-plugins"
+      },
+      "autoUpdate": true
+    }
+  }
+}
+```
+
+To update manually at any time, run:
+
+```bash
+claude plugin marketplace update unify-plugins
+claude plugin update unify@unify-plugins --scope user
+```
+
+then `/reload-plugins` (or fully restart the agent) to load the new code.
+
 ## Troubleshooting
 
 | Symptom                                          | Fix                                                                                                   |
