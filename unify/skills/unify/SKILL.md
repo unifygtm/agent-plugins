@@ -1,6 +1,6 @@
 ---
 name: unify
-description: Unify; start here. Directory for working with Unify, the go-to-market platform for finding and engaging buyers. Maps every Unify skill, agent-runs (run any GTM task through the Unify agent and manage the poll/answer loop), data-tables (page through result rows), discovery (build company and people lists), enrichment (find emails, phones, firmographics), outreach (sequences, tasks, outbound copy), crm (Salesforce/HubSpot reads and writes). Read this first to answer "what can I do with Unify?"
+description: Unify; start here. Directory for working with Unify, the go-to-market platform for finding and engaging buyers. Maps every Unify skill, agent-runs (run any GTM task through the Unify agent and manage the poll/answer loop), data-tables (page through result rows), discovery (build company and people lists), enrichment (find emails, phones, firmographics), outreach (sequences, tasks, outbound copy), crm (Salesforce/HubSpot reads and writes), bulk-apis (async query jobs to export large datasets via the public API). Read this first to answer "what can I do with Unify?"
 ---
 
 # Unify
@@ -11,35 +11,44 @@ natural language.
 
 ## Interaction model
 
-The Unify MCP server exposes a small tool set. Everything substantive is delegated
-to Unify's hosted GTM agent, which has its own data sources, skills, and safety
+The Unify MCP server exposes two tool families.
+
+**1. The hosted GTM agent** — most substantive work is a natural-language task
+delegated to Unify's agent, which has its own data sources, skills, and safety
 gates; loader tools then read the artifacts a run references:
 
-| Tool | Purpose |
-|---|---|
-| `run_agent` | Start the Unify agent on a natural-language task. Returns a `runId`. |
-| `poll_agent` | Check a run: `PENDING`, `CLARIFICATION_NEEDED`, `READY`, `ERROR`. |
-| `answer_question` | Answer clarifying questions and resume a paused run. |
-| `read_agent_results` | Read a terminal run's answer. Its structured content carries the exact IDs the loaders below need. |
-| `load_datatable` | Page through the rows of a DataTable version a run produced. |
-| `load_list` | Metadata + member count for a List (no rows). |
-| `load_mailbox_voice_profile` | Read-only state of a mailbox's voice-profile analysis. |
-| `load_user_general_context` | Read an exact version of the user's saved company profile/context. |
+| Tool                         | Purpose                                                                                            |
+| ---------------------------- | -------------------------------------------------------------------------------------------------- |
+| `run_agent`                  | Start the Unify agent on a natural-language task. Returns a `runId`.                               |
+| `poll_agent`                 | Check a run: `PENDING`, `CLARIFICATION_NEEDED`, `READY`, `ERROR`.                                  |
+| `answer_question`            | Answer clarifying questions and resume a paused run.                                               |
+| `read_agent_results`         | Read a terminal run's answer. Its structured content carries the exact IDs the loaders below need. |
+| `load_datatable`             | Page through the rows of a DataTable version a run produced.                                       |
+| `load_list`                  | Metadata + member count for a List (no rows).                                                      |
+| `load_mailbox_voice_profile` | Read-only state of a mailbox's voice-profile analysis.                                             |
+| `load_user_general_context`  | Read an exact version of the user's saved company profile/context.                                 |
 
 You are the briefing layer: write clear task briefs, relay clarifying questions to
 your user, and fetch results. Read `agent-runs` before your first run.
 
+**2. The public API** — deterministic REST endpoints (Data, Sequences, Tasks),
+each exposed as a `verb_resource` MCP tool: CRUD on objects, object records,
+object attributes, tasks, sequences, and sequence enrollments, plus the async
+**Bulk API** query jobs for large exports. Use these when the user wants an exact,
+repeatable read/write of data they already have rather than a reasoning task.
+
 ## Which skill for what
 
-| You want to... | Skill |
-|---|---|
-| Install the plugin or fix auth | see `GETTING_STARTED.md` in the repo root |
-| Run any Unify task and manage the run lifecycle | `agent-runs` |
-| Build a list of companies or people | `discovery` |
-| Find emails, phones, or company data for known entities | `enrichment` |
-| Write and send outreach (sequences), manage rep tasks | `outreach` |
-| Read or write Salesforce/HubSpot, save records, export lists | `crm` |
-| Pull rows from a result table | `data-tables` |
+| You want to...                                                  | Skill                                     |
+| --------------------------------------------------------------- | ----------------------------------------- |
+| Install the plugin or fix auth                                  | see `GETTING_STARTED.md` in the repo root |
+| Run any Unify task and manage the run lifecycle                 | `agent-runs`                              |
+| Build a list of companies or people                             | `discovery`                               |
+| Find emails, phones, or company data for known entities         | `enrichment`                              |
+| Write and send outreach (sequences), manage rep tasks           | `outreach`                                |
+| Read or write Salesforce/HubSpot, save records, export lists    | `crm`                                     |
+| Pull rows from a result table                                   | `data-tables`                             |
+| Export/sync large datasets deterministically via the public API | `bulk-apis`                               |
 
 ## Vocabulary (use these terms in briefs and with users)
 

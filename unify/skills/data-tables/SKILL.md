@@ -9,6 +9,12 @@ DataTables are the durable artifact of list-building and enrichment runs. When
 `read_agent_results` references a table, fetch it directly; don't start another
 run just to see rows you already have.
 
+> **Not the same as Bulk API results.** A DataTable is an **agent run** artifact,
+> paged here with `load_datatable` (cursor-based, pinned to a `versionId`). The
+> public **Bulk API** returns query-job results paged by `get_<resource>_query_job_results`
+> (`page` / `page_size`, see `bulk-apis`). If you have a `job_id` rather than a
+> `tableId` + `versionId`, use `bulk-apis`, not this skill.
+
 ## `load_datatable({ tableId, versionId, limit?, cursor? })`
 
 - `tableId` + `versionId`: **both required**; take them from the DataTable

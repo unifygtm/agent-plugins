@@ -8,6 +8,17 @@ description: Outreach with Unify, create email sequences, generate per-prospect 
 Outreach briefs go through `run_agent` (see `agent-runs`). Sequences have a strict
 safety lifecycle. Use its vocabulary precisely with both the agent and your user.
 
+> **Deterministic alternative.** The public API exposes direct tools for
+> inspecting and managing existing sequences, enrollments, and tasks without the
+> agent: `list_sequences` / `retrieve_sequence` / `list_sequence_steps`,
+> `list_sequence_enrollments` / `create_sequence_enrollment` /
+> `pause_sequence_enrollment` / `resume_sequence_enrollment`, and
+> `list_tasks` / `create_task` / `complete_task` / `update_task`. To export large
+> volumes of enrollments, enrollment steps, or tasks, use the async **Bulk API**
+> (see `bulk-apis`). All require an API-key connection (`X-API-Key`). The same
+> approval rules apply: `create_sequence_enrollment` enrolls a person and can
+> trigger sends, so only call it when your user explicitly approved that person.
+
 ## Sequence lifecycle (safety-critical)
 
 1. **Scaffold**, the reusable structure: steps (emails, calls, LinkedIn touches),
