@@ -8,6 +8,15 @@ description: CRM and record management with Unify, read Salesforce/HubSpot (owne
 CRM briefs go through `run_agent` (see `agent-runs`). Unify connects to Salesforce
 and HubSpot and also keeps its own canonical company/person records and Lists.
 
+> **Deterministic alternative.** If the user wants exact, repeatable reads/writes
+> of their **Unify objects and records** — not a natural-language task — the
+> public API exposes direct tools: `list_objects` / `get_object` and their
+> attributes, `get_object_record` / `create_object_record` / `update_object_record`
+> / `upsert_object_record` / `find_unique_object_record` / `delete_object_record`,
+> and the async **Bulk API** for exporting or syncing many records at once (see
+> `bulk-apis`). The agent briefs below remain the path for
+> complex workflows and anything needing reasoning.
+
 ## Reads (free, live)
 
 If the workspace has a connected CRM, briefs like these work directly:
