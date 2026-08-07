@@ -11,7 +11,7 @@ run just to see rows you already have.
 
 > **Not the same as Bulk API results.** A DataTable is an **agent run** artifact,
 > paged here with `load_datatable` (cursor-based, pinned to a `versionId`). The
-> public **Bulk API** returns query-job results paged by `get_<resource>_query_job_results`
+> public **Bulk API** returns query-job results paged by `get_query_job_results`
 > (`page` / `page_size`, see `bulk-apis`). If you have a `job_id` rather than a
 > `tableId` + `versionId`, use `bulk-apis`, not this skill.
 
