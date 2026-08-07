@@ -21,17 +21,39 @@ export or sync of records they already have.
 | Read rows a run already produced                                       | `load_datatable` (see `data-tables`)                                                                                |
 | Read/write a handful of records synchronously                          | public-API record tools (`get_object_record`, `upsert_object_record`, `list_sequence_enrollments`, `list_tasks`, …) |
 
+## The tools
+
+Six resource-parameterized tools cover every bulk export. Each takes a
+`resource` argument — one of `object_records`, `sequence_enrollments`,
+`sequence_enrollment_steps`, `tasks`, `events`:
+
+| Tool                      | Purpose                                                              |
+| ------------------------- | -------------------------------------------------------------------- |
+| `describe_query_resource` | Get the query schema, result row schema, and usage notes             |
+| `create_query_job`        | Start an asynchronous export                                         |
+| `get_query_job`           | Poll a job's status                                                  |
+| `get_query_job_results`   | Page through a `FINISHED` job's rows                                 |
+| `list_query_jobs`         | Enumerate recent jobs (e.g. to resume or clean up), filter by status |
+| `cancel_query_job`        | Cancel an `IN_PROGRESS` job — works for every resource               |
+
+When `resource` is `object_records`, every call also requires `object_name` —
+the API name of the object to export (e.g. `company`, `person`, or a custom
+object; discover names with `list_objects`). No other resource takes an
+`object_name`.
+
 ## The job lifecycle
 
-Every bulk resource follows the same three-step loop:
+Every bulk resource follows the same loop:
 
-1. **Create** — `create_<resource>_query_job(...)`. Returns
+1. **Describe (recommended)** — `describe_query_resource({ resource })` returns
+   the exact JSON Schema for the `query` argument plus the result row schema.
+2. **Create** — `create_query_job({ resource, query, object_name? })`. Returns
    `{ job_id, status: "IN_PROGRESS", expires_at }` immediately. The query runs
    server-side.
-2. **Poll** — `get_<resource>_query_job({ job_id })`. Returns
+3. **Poll** — `get_query_job({ resource, job_id, object_name? })`. Returns
    `{ job_id, status, total_rows, error_code, created_at, expires_at, canceled_at }`.
    Loop while `status` is `IN_PROGRESS`.
-3. **Read results** — `get_<resource>_query_job_results({ job_id, page, page_size })`
+4. **Read results** — `get_query_job_results({ resource, job_id, page, page_size, object_name? })`
    once `status` is `FINISHED`. Paginated; see below.
 
 `status` is one of `IN_PROGRESS`, `FINISHED`, `FAILED`, `EXPIRED`, `CANCELED`.
@@ -46,8 +68,7 @@ Jobs expire at `expires_at`; fetch results before then or re-create the job.
 
 ## Reading results (pagination)
 
-`get_<resource>_query_job_results` returns
-`{ total, page, page_size, data }`:
+`get_query_job_results` returns `{ total, page, page_size, data }`:
 
 - `page` is 1-based; `page_size` defaults per resource, **max 2,000** for these
   JSON responses.
@@ -55,28 +76,17 @@ Jobs expire at `expires_at`; fetch results before then or re-create the job.
 - For very large exports, confirm with the user before pulling every page;
   summarize from page 1 plus `total` when that answers the question.
 
-## Resources and their tools
-
-| Resource             | Create                                      | Poll                                     | Results                                          | List jobs                                  | Cancel                                      |
-| -------------------- | ------------------------------------------- | ---------------------------------------- | ------------------------------------------------ | ------------------------------------------ | ------------------------------------------- |
-| Object records       | `create_object_record_query_job`            | `get_object_record_query_job`            | `get_object_record_query_job_results`            | `list_object_record_query_jobs`            | —                                           |
-| Sequence enrollments | `create_sequence_enrollment_query_job`      | `get_sequence_enrollment_query_job`      | `get_sequence_enrollment_query_job_results`      | `list_sequence_enrollment_query_jobs`      | —                                           |
-| Enrollment steps     | `create_sequence_enrollment_step_query_job` | `get_sequence_enrollment_step_query_job` | `get_sequence_enrollment_step_query_job_results` | `list_sequence_enrollment_step_query_jobs` | `cancel_sequence_enrollment_step_query_job` |
-| Tasks                | `create_task_query_job`                     | `get_task_query_job`                     | `get_task_query_job_results`                     | `list_task_query_jobs`                     | —                                           |
-| Events               | `create_event_query_job`                    | `get_event_query_job`                    | `get_event_query_job_results`                    | `list_event_query_jobs`                    | —                                           |
-
-- `list_<resource>_query_jobs({ cursor, limit, status })` enumerates recent jobs
-  (e.g. to resume or clean up); `limit` max 100, filter by job `status`.
-- Only enrollment-step jobs currently expose a `cancel` tool. For the rest, let
-  a job finish or expire.
-
 ## Query shapes
+
+If a query argument is rejected, the error names the invalid key and the valid
+key set — call `describe_query_resource` and retry rather than guessing.
 
 **Object records** are the richest case. Create with an `object_name` and a
 `query`:
 
 ```
-create_object_record_query_job({
+create_query_job({
+  resource: "object_records",
   object_name: "company",
   query: {
     select: { name: true, domain: true, owner: { select: { email: true } } },
@@ -89,7 +99,7 @@ create_object_record_query_job({
 
 - `select` is **required**: each key is an attribute API name; `true` returns it,
   `{ select: … }` expands a single-reference attribute (nested **max 3 levels**,
-  root included).
+  root included). Discover attribute names with `list_object_attributes`.
 - `where` filters by attribute: `{ attr: { equals: value } }`, and nests through
   single-reference attributes.
 - `metadata` filters on record `created_at` / `updated_at`; `sort_by` orders by
@@ -98,8 +108,10 @@ create_object_record_query_job({
   null is omitted entirely, so a missing key means null — not "unselected".
   Timestamps have millisecond precision.
 
-**Enrollments, enrollment steps, tasks, events** create with a single `filter`
-object (no `object_name`, no `select`) describing which rows to return.
+**Enrollments, enrollment steps, tasks, events** take an optional flat `query`
+object of filters (no `object_name`, no `select`) describing which rows to
+return; omit it to export every row. `describe_query_resource` lists each
+resource's filter keys.
 
 ## Incremental (changed-since) sync
 
