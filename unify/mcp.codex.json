@@ -4,8 +4,7 @@
       "type": "http",
       "url": "https://mcp.unifygtm.com/mcp",
       "oauth": {
-        "client_id": "noOdn0wOIcxxTQUbQ3HEggImQAxkIjDf",
-        "callback_port": 1455
+        "client_id": "noOdn0wOIcxxTQUbQ3HEggImQAxkIjDf"
       }
     }
   }
