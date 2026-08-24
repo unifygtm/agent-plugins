@@ -8,7 +8,16 @@
   "license": "MIT",
   "keywords": ["unify", "gtm", "sales", "prospecting", "enrichment", "outbound", "crm"],
   "skills": "./skills/",
-  "mcpServers": "./.mcp.json",
+  "mcpServers": {
+    "unify": {
+      "type": "http",
+      "url": "https://mcp.unifygtm.com/mcp",
+      "oauth": {
+        "client_id": "noOdn0wOIcxxTQUbQ3HEggImQAxkIjDf",
+        "callback_port": 1455
+      }
+    }
+  },
   "apps": "./.app.json",
   "interface": {
     "displayName": "Unify",
