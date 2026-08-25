@@ -6,9 +6,17 @@
   "homepage": "https://www.unifygtm.com",
   "repository": "https://github.com/unifygtm/agent-plugins",
   "license": "MIT",
-  "keywords": ["unify", "gtm", "sales", "prospecting", "enrichment", "outbound", "crm"],
+  "keywords": [
+    "unify",
+    "gtm",
+    "sales",
+    "prospecting",
+    "enrichment",
+    "outbound",
+    "crm"
+  ],
   "skills": "./skills/",
-  "mcpServers": "./.mcp.json",
+  "mcpServers": "./mcp.codex.json",
   "apps": "./.app.json",
   "interface": {
     "displayName": "Unify",
