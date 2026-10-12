@@ -9,39 +9,46 @@ DataTables are the durable artifact of list-building and enrichment runs. When
 `read_agent_results` references a table, fetch it directly; don't start another
 run just to see rows you already have.
 
-> **Not the same as Bulk API results.** A DataTable is an **agent run** artifact,
-> paged here with `load_datatable` (cursor-based, pinned to a `versionId`). The
-> public **Bulk API** returns query-job results paged by `get_<resource>_query_job_results`
-> (`page` / `page_size`). If you have a `job_id` rather than a `tableId` +
-> `versionId`, use the public Bulk API tools, not this skill.
+> **Not the same as a List.** A DataTable is an **agent run** artifact, paged
+> here with `load_datatable`. A List is a saved collection of Unify records,
+> read with the public API tools `get_list` / `list_list_entries` (see `crm`).
 
-## `load_datatable({ tableId, versionId, limit?, cursor? })`
+## `load_datatable({ tableId, limit?, cursor? })`
 
-- `tableId` + `versionId`: **both required**; take them from the DataTable
-  reference in the run result's structured content. Loads pin an exact table
-  version, so pages are consistent even if the table keeps changing.
-- `limit`: rows per page, default 100.
-- `cursor`: pass the previous page's `nextCursor` to continue; it is bound to
-  the same table and version.
+- `tableId`: required; take it from the `DataTableView` item in the run
+  result's structured content. The tool loads the table's current working
+  version, so a table that later runs changed returns its latest rows.
+- `limit`: rows per page, default 100, max 500.
+- `cursor`: pass the previous page's `nextCursor` to continue.
 
-Returns `{ tableId, versionId, metadata, columns, rows, nextCursor }`. Each row
-is a map of column key → JSON value. `nextCursor: null` means you have the last
-page. `metadata.currentWorkingVersionId` tells you whether a newer working
-version exists than the one you loaded.
+Returns `{ metadata, columns, rows, nextCursor }`.
+
+- `metadata`: `tableId`, `name`, `kind`, `versionId`, `currentWorkingVersionId`,
+  `liveRowCount`, `hasActiveJob`, `activeJobKinds`, and timestamps.
+- `columns`: column definitions; each row's `values` is keyed by column `key`.
+- `rows`: each row has `id`, `values` (column key → JSON value), and, for
+  AI-derived cells, `enrichmentMeta` with the reason and source URLs behind each
+  value. Use it to answer "where did this value come from?"
+- `nextCursor: null` means you have the last page.
 
 ## Paging pattern
 
-1. First call with `tableId` + `versionId` (and a smaller `limit` if you only need a sample).
+1. First call with `tableId` (and a smaller `limit` if you only need a sample).
 2. Loop while `nextCursor` is non-null, passing it as `cursor`.
 3. For large tables, ask your user before pulling everything; summarize from the
-   first page plus `metadata` row counts when that answers the question.
+   first page plus `metadata.liveRowCount` when that answers the question.
+
+## Active jobs
+
+`metadata.hasActiveJob: true` means jobs are still running on the table, so some
+rows or cells may be missing or empty. `activeJobKinds` says which: `FILL` adds
+rows, `ENRICH` and `MAP` fill cells on existing rows. Tell the user the table is still filling, and call `load_datatable` again
+later for the updated rows.
 
 ## Notes
 
 - Tables are visible only to the user who owns them in the workspace; "DataTable
   not found" usually means a table from another user or session, not a bug.
-  "DataTable version not found" means a stale `versionId`; re-read the run
-  result (or ask the agent for the current version).
 - "Invalid DataTable cursor" → restart paging from the first page.
 - To add data to an existing table (more columns, more rows), start a new
   `run_agent` brief that names the table ID and describes the addition.

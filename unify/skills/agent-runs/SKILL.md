@@ -1,6 +1,6 @@
 ---
 name: agent-runs
-description: Run Unify agent tasks with the core run_agent → poll_agent → answer_question → read_agent_results loop. Use before starting any Unify run - covers writing effective task briefs, polling cadence, relaying clarification questions, reading results, and error recovery.
+description: Run Unify agent tasks with the core run_agent → poll_agent → answer_question → read_agent_results loop. Use before starting any Unify run - covers writing effective task briefs, polling cadence, relaying clarification questions, reading results, cancelling or finding runs, and error recovery.
 ---
 
 # Running the Unify agent
@@ -32,14 +32,18 @@ a terminal status — everything else about polling stays internal.
 
 `threadId` identifies the thread the agent ran in. Pass it back as
 `run_agent({ prompt, threadId })` for a follow-up task that should build on the
-same context (same thread, same link) instead of starting cold.
+same context (same thread, same link) instead of starting cold. Only threads
+started through `run_agent` by the same user can be continued, and a thread runs
+one task at a time: wait for the previous run to reach a terminal status (or
+cancel it) before continuing the thread.
 
 ## 2. Poll: `poll_agent({ runId })`
 
 Statuses: `PENDING` (keep polling), `CLARIFICATION_NEEDED`, `READY`, `ERROR`,
-`NOT_FOUND`. Runs commonly take one to several minutes; poll every ~10 seconds
-initially and back off toward ~30 seconds for long runs. Don't give up; complex
-list-building runs can run 10+ minutes.
+`NOT_FOUND` (no run with that ID for this user). Runs commonly take one to
+several minutes; poll every ~10 seconds initially and back off toward ~30
+seconds for long runs. Don't give up; complex list-building runs can run 10+
+minutes.
 Treat polling as internal tool work. Do not send user-facing messages that
 merely announce polling attempts, waits, cadence changes, or unchanged `PENDING`
 statuses. Beyond the initial "run started, here's the link" message, only message
@@ -48,8 +52,15 @@ actionable blocker occurs.
 
 ## 3. Clarifications: `answer_question({ runId, answers })`
 
-On `CLARIFICATION_NEEDED`, `poll_agent` returns `questions` (up to 4, each with
-2–4 options). Rules:
+On clients that support MCP form elicitation, `poll_agent` may show the agent's
+questions to the user in a dialog, resume the run with their answers, and
+return `PENDING`. Nothing else is needed; keep polling.
+
+`CLARIFICATION_NEEDED` means the user did not answer that way (the client has
+no dialog support, or the user dismissed it). `poll_agent` returns `questions`
+(up to 4, each with 2–4 options that have a `label` and `description`). Stop
+polling, since another poll can re-open a dialog the user already dismissed,
+and answer with `answer_question`. Rules:
 
 - Answer every question in one call, in the same order, with `question` copied
   **exactly** as returned; the server rejects mismatches.
@@ -58,16 +69,38 @@ On `CLARIFICATION_NEEDED`, `poll_agent` returns `questions` (up to 4, each with
   present the questions and options to your user verbatim and relay their choices.
 - Response is `{ runId, alreadyResuming }`; keep polling either way. If the call
   fails with a retryable message, retry with the same answers.
+- If `poll_agent` itself fails with "Failed to resume the run with the user's
+  answers", call `answer_question` with the answers quoted in that message.
 
 ## 4. Read: `read_agent_results({ runId })`
 
 Only for `READY` or `ERROR` runs. Returns
 `{ status, finalAnswer, content, errorMessage, threadLink }`.
-`finalAnswer` is plain text. The result's **structured content** (`content`)
-carries typed resource references with the exact IDs the loader tools require. A
-DataTable reference includes `tableId` + `versionId` (both needed by
-`load_datatable`), a List reference includes its `listId` (for `load_list`), and
-so on. Take IDs from there rather than parsing them out of the prose.
+`finalAnswer` is plain text. `content` is an array of typed items, and the
+`resource` items carry the exact IDs the loader tools need. Take IDs from there
+rather than parsing them out of the prose:
+
+| `componentType`           | IDs                                     | Read with                                                       |
+| ------------------------- | --------------------------------------- | --------------------------------------------------------------- |
+| `DataTableView`           | `tableId`, `versionId`                  | `load_datatable({ tableId })`                                   |
+| `MailboxVoiceProfileView` | `connectedMailboxId`                    | `load_mailbox_voice_profile`                                    |
+| `UserGeneralContextView`  | `userGeneralContextId`, `versionId`     | `load_general_context({ generalContextId: userGeneralContextId, versionId })` |
+| `SequenceView`            | `sequenceId`                            | `retrieve_sequence({ id })`, `list_sequence_steps({ id })`      |
+| `SequenceEnrollmentsView` | `sequenceId`, `sequenceExecutionIds`    | `get_sequence_enrollment({ id })` per enrollment ID             |
+
+Other `resource` items (Tasks tables, Audiences, exclusions) have no loader
+tool; describe them from `finalAnswer` and point the user to the thread link.
+
+Other item types:
+
+- `text`: prose segments. A List the run created or found arrives as a `text`
+  item reading "Open the List in Unify: <url>"; the List ID is the last path
+  segment of that URL, for `get_list` / `list_list_entries`.
+- `action` (`requiresUserInteraction: true`, with a `url`): something only the
+  user can do in the Unify app, such as connecting a CRM or mailbox or changing
+  CRM workspace settings. Show the URL and say what it is for.
+- `content`: inline presentation such as charts or suggested next actions.
+  Summarize it in your own words when it helps the user.
 
 `threadLink` is the same clickable thread URL `run_agent` returned, and comes
 back for both `READY` and `ERROR` runs. Present it again after relaying results
@@ -87,9 +120,31 @@ In clients known to support inline HTML, `<sub>Run details: <threadLink></sub>`
 is also acceptable, but do not rely on font sizing or hide the URL behind
 Markdown link text.
 
+## 5. Cancel: `cancel_agent({ runId })`
+
+Stops an in-flight run, including one paused on a clarification. Use it when
+the user asks to stop, or when a brief turned out to be wrong and you are about
+to start a corrected one. Returns `{ runId, outcome }`: `CANCELED`, or
+`ALREADY_TERMINAL` when the run had already finished. Once cancellation
+completes, `poll_agent` reports `ERROR` and `read_agent_results` returns an
+`ERROR` result. Some runs are non-cancellable and return an error.
+
+## 6. Find runs: `list_agent_runs({ status?, limit?, cursor? })`
+
+Lists the user's `run_agent` runs, newest first. Each entry has `runId`,
+`threadId`, `threadLink`, `threadTitle`, `status`, and `startedAt`. Use it to
+recover a run from an earlier session or to check what is still running.
+`status` here is the raw run status (`PENDING`, `STREAMING`, `PAUSED`,
+`COMPLETED`, `FAILED`, `CANCELED`), not the `poll_agent` status; filter on it to
+narrow the list, then call `poll_agent` on an active run for its current state.
+`limit` defaults to 50 (max 100); pass `nextCursor` as `cursor` for the next
+page.
+
 ## Errors
 
-- "workspace does not have chat funding available" → billing gate; surface to the user.
+- "The workspace does not have chat funding available" → billing gate; surface to the user.
 - Rate-limit errors → wait and retry `run_agent` once; don't hammer.
+- "Failed to start agent run." → retry `run_agent` once.
+- "Agent thread not found." or "The provided thread cannot be reused by run_agent." → start a new thread by omitting `threadId`.
 - `ERROR` status → read `errorMessage`, report it plainly; a fresh, more specific brief often succeeds where a vague one failed.
-- Runs are visible only to the user who created them; don't ask about runIds from other sessions or users.
+- Runs are visible only to the user who created them. Use `list_agent_runs` to find runIds from this user's earlier sessions; runs from other users are not accessible.
