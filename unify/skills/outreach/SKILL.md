@@ -8,14 +8,9 @@ description: Outreach with Unify, create email sequences, generate per-prospect 
 Outreach briefs go through `run_agent` (see `agent-runs`). Sequences have a strict
 safety lifecycle. Use its vocabulary precisely with both the agent and your user.
 
-> **Deterministic alternative.** The public API exposes direct tools for
-> inspecting and managing existing sequences, enrollments, and tasks without the
-> agent: `list_sequences` / `retrieve_sequence` / `list_sequence_steps`,
-> `list_sequence_enrollments` / `create_sequence_enrollment` /
-> `pause_sequence_enrollment` / `resume_sequence_enrollment`, and
-> `list_tasks` / `create_task` / `complete_task` / `update_task`. To export large
-> volumes of enrollments, enrollment steps, or tasks, use the async **Bulk API**
-> tools. All require an API-key connection (`X-API-Key`).
+> **Deterministic alternative.** For inspecting and managing existing sequences,
+> enrollments, and tasks without the agent, use the tools under
+> [Public API tools](#public-api-tools). They act as the signed-in user.
 
 ## Sequence lifecycle (safety-critical)
 
@@ -62,6 +57,48 @@ action items. Useful briefs:
 ## Mailbox voice profile
 
 Unify can analyze a mailbox's sent mail to build a **voice profile** that
-shapes generated copy. When a run kicks that analysis off, check progress with
-`load_mailbox_voice_profile({ connectedMailboxId })` (ID from the run result's
-structured content), poll only while `isTerminal` is false; it's read-only.
+shapes generated copy. Read it with
+`load_mailbox_voice_profile({ connectedMailboxId })`, taking the ID from the
+`MailboxVoiceProfileView` item in the run result's structured content. It
+returns `{ voiceProfile }` and is read-only. "Mailbox voice profile is
+unavailable." means the analysis has not produced a profile yet, or the mailbox
+is not one of the user's own; don't poll on it.
+
+## Public API tools
+
+- **Sequences**: `list_sequences` (filter by `name` substring) /
+  `retrieve_sequence`, `list_sequence_steps` / `retrieve_sequence_step`,
+  `pause_sequence` / `resume_sequence` (affects every enrollment in the
+  sequence), and `delete_sequence`. The step tools read the latest published
+  version and return `sequence_not_published` for a sequence that was never
+  published; pass `include_draft: true` to read the newest draft instead.
+- **Enrollments**: `list_sequence_enrollments` (filter by `sequence_id`,
+  `person_id`, `mailbox_id`, `status`, or update time) / `get_sequence_enrollment`,
+  `pause_sequence_enrollment` / `resume_sequence_enrollment`, and
+  `delete_sequence_enrollment`, which cancels the enrollment and stops its
+  remaining steps.
+- **`create_sequence_enrollment` sends.** It enrolls a person directly in a
+  published sequence and skips the preview and approval steps above, so call it
+  only after the user explicitly approves enrolling that person. It needs
+  `sequence_id`, `person_id`, and `mailbox_emails` (1–10 sending mailbox
+  addresses; one is chosen at enrollment). Pass `allowed_concurrent_sequence_ids`
+  only for other active sequences the user reviewed. Agentic sequences reject API
+  enrollment ("This sequence cannot be enrolled through the API."); enroll those
+  with a `run_agent` brief instead.
+- **Tasks**: `list_tasks` (filter by `status`, `assigned_user_id`, `person_id`,
+  or `person_email`) / `retrieve_task`, `create_task`, `update_task` (assignee,
+  priority, or due date), `complete_task`, and `delete_task`. For "my tasks",
+  get the user's ID from `get_me` and pass it as `assigned_user_id`.
+  `create_task` takes a `person_id`, optional `priority` and `due_at`, and a
+  `type`: `ACTION_ITEM`, `PHONE_CALL`,
+  `LINKEDIN_SEND_MESSAGE`, `LINKEDIN_SEND_CONNECTION_REQUEST`, and
+  `LINKEDIN_VIEW_PROFILE` take an optional `note_content`; `EMAIL` takes
+  `mailbox_email`, `subject`, and `content`, and the email sends from that
+  mailbox when the task is completed. Completing an email task, or a task that
+  belongs to a sequence step, can send or advance the sequence, so only call
+  `complete_task` on tasks the user asked you to complete.
+- Ask the user before `delete_sequence`, `delete_sequence_enrollment`,
+  `delete_task`, or `pause_sequence`.
+- Large exports of enrollments or tasks go through the REST API's bulk query
+  jobs, which are not MCP tools. Page through the `list_*` tools with `cursor` /
+  `limit` instead.

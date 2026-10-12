@@ -45,4 +45,6 @@ brief implies large spend; answer or relay it (see `agent-runs`).
   the Unify agent itself refuses to write outreach on thin prospect context.
 - **Scout before scale**: for 100+ rows, enrich 5 first, review the hit rate with
   the user, then run the remainder.
-- Results append columns to a DataTable; page with `load_datatable`.
+- Results append columns to a DataTable; page with `load_datatable`. If its
+  `metadata.hasActiveJob` is true, enrichment is still filling cells; load it
+  again later rather than reporting empty cells as misses.

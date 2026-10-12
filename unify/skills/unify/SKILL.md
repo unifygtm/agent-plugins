@@ -15,27 +15,32 @@ The Unify MCP server exposes two tool families.
 
 **1. The hosted GTM agent** — most substantive work is a natural-language task
 delegated to Unify's agent, which has its own data sources, skills, and safety
-gates; loader tools then read the artifacts a run references:
+gates. These tools start and manage runs, then read the artifacts a run
+references:
 
 | Tool                         | Purpose                                                                                            |
 | ---------------------------- | -------------------------------------------------------------------------------------------------- |
-| `run_agent`                  | Start the Unify agent on a natural-language task. Returns a `runId`.                               |
-| `poll_agent`                 | Check a run: `PENDING`, `CLARIFICATION_NEEDED`, `READY`, `ERROR`.                                  |
+| `run_agent`                  | Start the Unify agent on a natural-language task. Returns a `runId`, `threadId`, and `threadLink`. |
+| `poll_agent`                 | Check a run: `PENDING`, `CLARIFICATION_NEEDED`, `READY`, `ERROR`, `NOT_FOUND`.                     |
 | `answer_question`            | Answer clarifying questions and resume a paused run.                                               |
 | `read_agent_results`         | Read a terminal run's answer. Its structured content carries the exact IDs the loaders below need. |
-| `load_datatable`             | Page through the rows of a DataTable version a run produced.                                       |
-| `load_list`                  | Metadata + member count for a List (no rows).                                                      |
-| `load_mailbox_voice_profile` | Read-only state of a mailbox's voice-profile analysis.                                             |
-| `load_user_general_context`  | Read an exact version of the user's saved company profile/context.                                 |
+| `cancel_agent`               | Stop an in-flight run.                                                                             |
+| `list_agent_runs`            | List your runs, newest first, optionally filtered by status.                                       |
+| `load_datatable`             | Page through the rows of a DataTable a run produced.                                               |
+| `load_mailbox_voice_profile` | Read the voice profile built from one of your connected mailboxes.                                 |
+| `load_general_context`       | Read an exact version of the user's saved company profile/context.                                 |
+| `get_me`                     | The signed-in user's profile and workspace.                                                        |
 
 You are the briefing layer: write clear task briefs, relay clarifying questions to
 your user, and fetch results. Read `agent-runs` before your first run.
 
 **2. The public API** — deterministic REST endpoints (Data, Sequences, Tasks),
-each exposed as a `verb_resource` MCP tool: CRUD on objects, object records,
-object attributes, tasks, sequences, and sequence enrollments, plus the async
-**Bulk API** query jobs for large exports. Use these when the user wants an exact,
-repeatable read/write of data they already have rather than a reasoning task.
+each exposed as a `verb_resource` MCP tool: CRUD on objects, object attributes
+and their options, object records, Lists and list entries, tasks, sequences,
+sequence steps, and sequence enrollments. These tools act as the signed-in user.
+Use them when the user wants an exact, repeatable read/write of data they already
+have rather than a reasoning task. The REST API's async bulk query jobs are not
+exposed as MCP tools; the paginated `list_*` tools take `cursor` / `limit`.
 
 ## Which skill for what
 
@@ -48,12 +53,12 @@ repeatable read/write of data they already have rather than a reasoning task.
 | Write and send outreach (sequences), manage rep tasks           | `outreach`                                |
 | Read or write Salesforce/HubSpot, save records, export lists    | `crm`                                     |
 | Pull rows from a result table                                   | `data-tables`                             |
-| Export/sync large datasets deterministically via the public API | Use the public Bulk API tools             |
+| Exact reads/writes of records, Lists, sequences, or tasks       | Public API tools (see `crm`, `outreach`)  |
 
 ## Vocabulary (use these terms in briefs and with users)
 
 - **DataTable**: the durable artifact for any list-building or enrichment run; page it with `load_datatable`.
-- **List**: a saved, named collection of records in the Unify app (distinct from a DataTable).
+- **List**: a saved, named collection of records of one object (for example companies or people) in the Unify app, distinct from a DataTable. Read it with `get_list` / `list_list_entries`.
 - **Sequence**: multi-step outreach. A **scaffold** is the reusable structure; a **preview** is generated per-prospect copy that does NOT send; email sends only after previews are approved and **enrolled**.
 - **Persona**: a tenant-level set of job titles defining a buyer role.
 - **Tasks**: one-off manual to-dos for a rep (calls, LinkedIn touches, action items).
@@ -68,5 +73,5 @@ cares ("cheapest sources only", "cap at 100 records", "up to N credits").
 ## Behavior
 
 - Narrate briefly what you asked Unify to do and summarize outcomes; don't dump raw JSON.
-- Runs are user- and workspace-scoped to the OAuth identity; you can only see runs and tables you created.
+- Runs are user- and workspace-scoped to the OAuth identity; you can only see runs and tables you created. `list_agent_runs` finds runs started in earlier sessions.
 - A successfully connected Unify MCP server means authentication and workspace authorization are already established for the current session. Do not ask the user to confirm access, credentials, OAuth, or authorization before using available tools. If a tool returns an auth or connection error, direct the user to reconnect in the Unify app.
