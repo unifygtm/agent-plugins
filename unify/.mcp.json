@@ -5,7 +5,8 @@
       "url": "https://mcp.unifygtm.com/mcp",
       "oauth": {
         "clientId": "o32T8irkR9ykR3VV5lb0ULclZcLylMzf",
-        "callbackPort": 53233
+        "callbackPort": 53233,
+        "scopes": "offline_access"
       }
     }
   }
