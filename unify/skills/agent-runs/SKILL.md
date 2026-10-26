@@ -1,15 +1,18 @@
 ---
 name: agent-runs
-description: Run Unify agent tasks with the core run_agent → poll_agent → answer_question → read_agent_results loop. Use before starting any Unify run - covers writing effective task briefs, polling cadence, relaying clarification questions, reading results, cancelling or finding runs, and error recovery.
+description: Run Unify agent tasks with the core run_agent → poll_agent → answer_question → read_agent_results loop, or as an MCP task on clients that support tasks. Use before starting any Unify run - covers writing effective task briefs, task results, polling cadence, relaying clarification questions, reading results, cancelling or finding runs, and error recovery.
 ---
 
 # Running the Unify agent
 
-Every Unify task is one lifecycle: start, poll, (maybe) answer questions, read.
+Every Unify task is one lifecycle: start, wait for the outcome, (maybe) answer
+questions, read. On clients that support MCP tasks the client does the waiting
+(section 2); otherwise you poll (sections 3 to 5).
 
 ## 1. Start: `run_agent({ prompt })`
 
-Returns `{ runId, threadId, threadLink }` immediately. Write the prompt as a
+Returns one of two results: a task, on clients that support MCP tasks (section
+2), or `{ runId, threadId, threadLink }` immediately. Write the prompt as a
 brief to a skilled GTM operator who cannot see your conversation. Include:
 
 - **Entity type and deliverable**: companies or people; inline answer or a DataTable ("return the results as a DataTable" for anything more than a couple of records).
@@ -21,7 +24,8 @@ brief to a skilled GTM operator who cannot see your conversation. Include:
 Pre-answer the obvious clarification dimensions above; the agent pauses to ask
 when scope is ambiguous or expensive.
 
-**Show `threadLink` as soon as the run starts.** The run happens in the
+**Show `threadLink` as soon as the run starts.** For a task, the link is in
+the server note the client shows you when the task starts. The run happens in the
 background on Unify's side, so the link is what lets the user watch it live —
 intermediate steps, tool calls, and partial results stream into that thread while
 you poll. Send one short message right after `run_agent` returns that says the
@@ -37,7 +41,41 @@ started through `run_agent` by the same user can be continued, and a thread runs
 one task at a time: wait for the previous run to reach a terminal status (or
 cancel it) before continuing the thread.
 
-## 2. Poll: `poll_agent({ runId })`
+## 2. Task results (clients that support MCP tasks)
+
+On clients that support the MCP tasks extension, such as Claude Code in an
+interactive session, `run_agent` returns a task instead of
+`{ runId, threadId, threadLink }`. The client polls the task itself and hands
+you its result as the tool result when the task ends.
+
+- **At start**, the client shows you a note from the server with the run ID and
+  `threadLink`. Send the user the link as described above. Do not call
+  `poll_agent` or `read_agent_results` for this run while the task is running:
+  the client is already waiting on it, and polling can reopen a question dialog
+  the user dismissed.
+- **Questions**: in an interactive session the client shows the agent's
+  questions in a dialog, and the run continues once the user answers. Nothing
+  else is needed.
+- **The result** is one of:
+  - The `read_agent_results` payload (`status` `READY` or `ERROR`,
+    `finalAnswer`, `content`, `errorMessage`, `threadLink`). Handle it as in
+    section 5.
+  - `{ runId, status: "CLARIFICATION_NEEDED", questions }`: the questions were
+    not answered in a dialog, because the user dismissed it or the client
+    cannot show one. Answer them with `answer_question` as in section 4, then
+    poll the resumed run with `poll_agent` and read it as in section 5.
+- **Cancelled while waiting on questions**: the user can stop a task from the
+  client. If the status message says the run is paused on questions and lists
+  them, the run is still waiting: answer with `answer_question` and poll as
+  above, or call `cancel_agent` if the user wants the run stopped. A task
+  stopped while the run was working means the run was canceled.
+
+Which result you get is decided per call, and a task that ended stays ended:
+nothing more arrives for it after the run resumes. When `run_agent` returns
+`{ runId, threadId, threadLink }`, or after you answer a task's questions, use
+the loop in sections 3 to 5.
+
+## 3. Poll: `poll_agent({ runId })`
 
 Statuses: `PENDING` (keep polling), `CLARIFICATION_NEEDED`, `READY`, `ERROR`,
 `NOT_FOUND` (no run with that ID for this user). Runs commonly take one to
@@ -50,7 +88,7 @@ statuses. Beyond the initial "run started, here's the link" message, only messag
 the user when input is required, the run reaches a terminal state, or an
 actionable blocker occurs.
 
-## 3. Clarifications: `answer_question({ runId, answers })`
+## 4. Clarifications: `answer_question({ runId, answers })`
 
 On clients that support MCP form elicitation, `poll_agent` may show the agent's
 questions to the user in a dialog, resume the run with their answers, and
@@ -72,9 +110,11 @@ and answer with `answer_question`. Rules:
 - If `poll_agent` itself fails with "Failed to resume the run with the user's
   answers", call `answer_question` with the answers quoted in that message.
 
-## 4. Read: `read_agent_results({ runId })`
+## 5. Read: `read_agent_results({ runId })`
 
-Only for `READY` or `ERROR` runs. Returns
+Only for `READY` or `ERROR` runs you polled with `poll_agent`. A task that
+finishes with the run's outcome delivers this payload as its result, so do not
+read that run again. Returns
 `{ status, finalAnswer, content, errorMessage, threadLink }`.
 `finalAnswer` is plain text. `content` is an array of typed items, and the
 `resource` items carry the exact IDs the loader tools need. Take IDs from there
@@ -120,16 +160,18 @@ In clients known to support inline HTML, `<sub>Run details: <threadLink></sub>`
 is also acceptable, but do not rely on font sizing or hide the URL behind
 Markdown link text.
 
-## 5. Cancel: `cancel_agent({ runId })`
+## 6. Cancel: `cancel_agent({ runId })`
 
 Stops an in-flight run, including one paused on a clarification. Use it when
 the user asks to stop, or when a brief turned out to be wrong and you are about
 to start a corrected one. Returns `{ runId, outcome }`: `CANCELED`, or
 `ALREADY_TERMINAL` when the run had already finished. Once cancellation
 completes, `poll_agent` reports `ERROR` and `read_agent_results` returns an
-`ERROR` result. Some runs are non-cancellable and return an error.
+`ERROR` result. Some runs are non-cancellable and return an error. Stopping a
+task in the client cancels a working run but leaves a run that is waiting on
+questions paused; call `cancel_agent` to stop that run.
 
-## 6. Find runs: `list_agent_runs({ status?, limit?, cursor? })`
+## 7. Find runs: `list_agent_runs({ status?, limit?, cursor? })`
 
 Lists the user's `run_agent` runs, newest first. Each entry has `runId`,
 `threadId`, `threadLink`, `threadTitle`, `status`, and `startedAt`. Use it to

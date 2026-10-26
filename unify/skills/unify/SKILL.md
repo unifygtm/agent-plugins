@@ -20,7 +20,7 @@ references:
 
 | Tool                         | Purpose                                                                                            |
 | ---------------------------- | -------------------------------------------------------------------------------------------------- |
-| `run_agent`                  | Start the Unify agent on a natural-language task. Returns a `runId`, `threadId`, and `threadLink`. |
+| `run_agent`                  | Start the Unify agent on a natural-language task. Returns a task on clients that support MCP tasks, otherwise a `runId`, `threadId`, and `threadLink`. |
 | `poll_agent`                 | Check a run: `PENDING`, `CLARIFICATION_NEEDED`, `READY`, `ERROR`, `NOT_FOUND`.                     |
 | `answer_question`            | Answer clarifying questions and resume a paused run.                                               |
 | `read_agent_results`         | Read a terminal run's answer. Its structured content carries the exact IDs the loaders below need. |
