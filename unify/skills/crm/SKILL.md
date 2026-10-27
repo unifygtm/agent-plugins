@@ -14,33 +14,55 @@ and HubSpot and also keeps its own canonical company/person records and Lists.
 > [Public API tools](#public-api-tools). The agent briefs remain the path for
 > CRM reads and writes, complex workflows, and anything needing reasoning.
 
-## Reads (free, live)
+## Reads (live)
 
-If the workspace has a connected CRM, briefs like these work directly:
+CRM reads need a connected CRM on Unify's Pro plan (read-only) or Business plan
+(read/write). With one connected, briefs like these work directly, and pure CRM
+questions run live against the CRM:
 
 - "Which of these accounts exist in our Salesforce, and who owns them?"
 - "Open opportunities past stage 2 closing this quarter."
 - "What picklist values does the deal-stage field have?"
-- Joins with Unify signals are free too: "CRM accounts with website intent this
-  month that have no open opportunity."
+- Joins with Unify signals: "CRM accounts with website intent this month that
+  have no open opportunity." Which signals exist depends on the plan; website
+  intent needs Business.
+
+Include domains when asking whether companies exist in the CRM; the agent does
+not treat a failed name match as proof a company is missing.
 
 ## Writes
 
-CRM writes are available on Unify's Business plan and behave as
-search-then-create-or-update (matching by domain, email, or record ID; the agent
-handles dedupe). Rules:
+CRM writes need the Business plan, a workspace setting that allows CRM writes
+from chat, and permission on the connected CRM account; they run as that CRM
+user. Writes search first, then create or update: companies match by domain,
+people by email, and logged tasks and emails by subject and related records.
+People land as Contacts or Leads depending on the workspace's integration
+settings. Rules:
 
-- Log activities too: "log this call/email against the contact in HubSpot."
+- The agent writes every value it has for a record. If only some fields should
+  change, say exactly which.
+- Search-first reduces duplicates but does not rule them out across separate
+  runs, so don't resend a write brief just to retry; check the result first.
+- Log activities too: "log this call/email against the contact in HubSpot." An
+  activity needs a person to attach to.
+- Deleting a Salesforce record or archiving a HubSpot object needs the user's
+  explicit confirmation naming that record. Relay the agent's confirmation
+  question rather than pre-authorizing it in the brief.
+- HubSpot segments: the agent adds records only to manual or snapshot segments
+  (not dynamic ones), and creates a new segment only when asked.
 
 ## Unify records and Lists
 
-- **Save to Unify**: "save these companies/people as Unify records." Companies
-  need a domain; people need an email. The agent previews EXISTING/NEW/INVALID
-  classifications before committing.
+- **Save to Unify**: "save these companies/people as Unify records" commits
+  right away and creates missing records. Companies need a domain; people need
+  an email. To review first, ask the agent to preview which records are
+  existing, new, duplicate, or invalid and to wait for an OK before saving.
 - **Lists**: named, saved collections in the Unify app. "Export this DataTable to
-  a List called Q3 targets" (the export previews counts: new, already in list,
-  duplicates, invalid) before committing. Say whether creating brand-new records
-  is allowed or the export should only link existing ones. The run result links
+  a List called Q3 targets." The agent checks counts (new, already in list,
+  duplicates, invalid) and commits in the same run; ask for a preview only if
+  the user wants to review first. Say whether creating brand-new records is
+  allowed or the export should only link existing ones. Rows without a domain
+  (companies) or email (people) come back invalid. The run result links
   the List; check it afterwards with `get_list` and `list_list_entries` (see
   `agent-runs` for getting the List ID).
 - **Personas**: tenant-level title sets. "Update our 'economic buyer' persona to
@@ -55,7 +77,9 @@ handles dedupe). Rules:
   `list_object_attribute_options` / `get_object_attribute_option` /
   `create_object_attribute_option` / `update_object_attribute_option` /
   `delete_object_attribute_option`. Objects and attributes are addressed by API
-  name (`object_name`, `attribute_name`).
+  name (`object_name`, `attribute_name`). Set `is_required` / `is_unique` when
+  creating an attribute: `update_object_attribute` can only remove them (pass
+  `false`), and custom attributes on standard objects cannot be required.
 - **Records**: `get_object_record` / `create_object_record` /
   `update_object_record` / `delete_object_record` by record ID;
   `find_unique_object_record` to look one up by attribute values (returns `null`

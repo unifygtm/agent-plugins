@@ -42,13 +42,18 @@ Returns `{ metadata, columns, rows, nextCursor }`.
 
 `metadata.hasActiveJob: true` means jobs are still running on the table, so some
 rows or cells may be missing or empty. `activeJobKinds` says which: `FILL` adds
-rows, `ENRICH` and `MAP` fill cells on existing rows. Tell the user the table is still filling, and call `load_datatable` again
-later for the updated rows.
+rows (search tables), `MAP` fills cells on existing rows, and `RANK` selects
+people from company rosters and writes them to the table. `ENRICH` is retired
+and appears only on older tables. Tell the user the table is still filling, and
+call `load_datatable` again later for the updated rows.
 
 ## Notes
 
 - Tables are visible only to the user who owns them in the workspace; "DataTable
   not found" usually means a table from another user or session, not a bug.
 - "Invalid DataTable cursor" → restart paging from the first page.
-- To add data to an existing table (more columns, more rows), start a new
-  `run_agent` brief that names the table ID and describes the addition.
+- To add data to an existing table (more columns, more rows), continue the run's
+  thread (`run_agent({ prompt, threadId })`) or start a new brief that names the
+  table ID, and describe the addition. Say whether to add columns to this table
+  in place: for "find people at these companies" the agent otherwise creates a
+  separate people table.

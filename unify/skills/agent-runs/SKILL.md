@@ -16,10 +16,10 @@ Returns one of two results: a task, on clients that support MCP tasks (section
 brief to a skilled GTM operator who cannot see your conversation. Include:
 
 - **Entity type and deliverable**: companies or people; inline answer or a DataTable ("return the results as a DataTable" for anything more than a couple of records).
-- **Hard filters vs. intent**: exact constraints (industry, headcount, geography, funding stage, titles) separately from fuzzy persona intent ("technical buyers of data-infrastructure tooling"). Geography defaults to US, so say otherwise explicitly.
+- **Hard filters vs. intent**: exact constraints (industry, headcount, geography, funding stage, titles) separately from fuzzy persona intent ("technical buyers of data-infrastructure tooling"). Always state geography; not every source defaults to the same region.
 - **Scale**: target count ("20 companies", "2–3 contacts per company").
-- **Budget**: if spend matters: "prefer free sources (Universal Data, CRM)" or "cap credit spend at N".
-- **Approval semantics** for outreach: whether to stop at previews or the user has approved enrolling/sending. Never authorize sending unless your user explicitly did.
+- **Budget**: if spend matters: "prefer free sources (Universal Data, CRM)", "at most N records", or "email only, skip phones".
+- **Approval semantics** for outreach: whether to stop at drafts or the user has approved enrolling/sending. Never authorize sending unless your user explicitly did.
 
 Pre-answer the obvious clarification dimensions above; the agent pauses to ask
 when scope is ambiguous or expensive.

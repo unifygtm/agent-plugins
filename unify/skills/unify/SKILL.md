@@ -37,7 +37,8 @@ your user, and fetch results. Read `agent-runs` before your first run.
 **2. The public API** — deterministic REST endpoints (Data, Sequences, Tasks),
 each exposed as a `verb_resource` MCP tool: CRUD on objects, object attributes
 and their options, object records, Lists and list entries, tasks, sequences,
-sequence steps, and sequence enrollments. These tools act as the signed-in user.
+sequence steps, sequence enrollments, and each enrollment's steps and draft
+copy. These tools act as the signed-in user.
 Use them when the user wants an exact, repeatable read/write of data they already
 have rather than a reasoning task. The REST API's async bulk query jobs are not
 exposed as MCP tools; the paginated `list_*` tools take `cursor` / `limit`.
@@ -57,18 +58,21 @@ exposed as MCP tools; the paginated `list_*` tools take `cursor` / `limit`.
 
 ## Vocabulary (use these terms in briefs and with users)
 
-- **DataTable**: the durable artifact for any list-building or enrichment run; page it with `load_datatable`.
+- **DataTable**: the durable table a run creates for multi-row results from list-building or enrichment; page it with `load_datatable`. One-off lookups and counts come back as text.
 - **List**: a saved, named collection of records of one object (for example companies or people) in the Unify app, distinct from a DataTable. Read it with `get_list` / `list_list_entries`.
-- **Sequence**: multi-step outreach. A **scaffold** is the reusable structure; a **preview** is generated per-prospect copy that does NOT send; email sends only after previews are approved and **enrolled**.
+- **Sequence**: multi-step outreach built from a reusable **template** of steps, delays, and drafting prompts. In an AI-personalized sequence, adding people creates per-person **drafts** that do NOT send; email sends only after drafts are **enrolled** (started). A **preview** is only the sample copy on a template step. A fixed-template sequence has no drafts and starts sending when people are added.
 - **Persona**: a tenant-level set of job titles defining a buyer role.
-- **Tasks**: one-off manual to-dos for a rep (calls, LinkedIn touches, action items).
+- **Audience** / **Segment**: saved sets of companies or people (Audience) and saved company filters such as territories (Segment) that briefs can reference by name.
+- **Tasks**: a rep's to-do queue: sequence steps (calls, LinkedIn touches, emails, replies) plus one-off tasks.
 
 ## Cost model
 
-Unify's proprietary **Universal Data** (1.1B+ people, 65M+ companies) and connected
-**CRM** reads are free. Third-party data vendors charge credits per record returned.
-The agent already minimizes spend, but state a budget in your brief when the user
-cares ("cheapest sources only", "cap at 100 records", "up to N credits").
+Every run uses credits for the agent's own work. Unify's **Universal Data**
+(1.1B+ people, 65M+ companies) and connected **CRM** reads add no vendor charge.
+Third-party data vendors add credits per record, per call, or per field found,
+depending on the source; contact-data misses are not billed. The agent already
+minimizes spend, but limit scope in your brief when the user cares ("cheapest
+sources only", "at most 100 records", "email only, skip phones").
 
 ## Behavior
 
