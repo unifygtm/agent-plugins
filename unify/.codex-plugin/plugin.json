@@ -1,6 +1,6 @@
 {
   "name": "unify",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Run Unify's GTM agent from Codex to build company and people lists, enrich emails and phone numbers, and launch sequences and tasks.",
   "author": { "name": "Unify", "url": "https://www.unifygtm.com" },
   "homepage": "https://www.unifygtm.com",
