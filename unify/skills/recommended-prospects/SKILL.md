@@ -11,8 +11,8 @@ workstream without touching them, offer them.
 
 ## What they are
 
-Unify researches each account in the seller's **Book of Business** (the accounts
-the seller owns or works) and writes an **account plan** for it. From that plan
+Unify researches each account in the seller's **Book of Business** (see
+`book-of-business`) and writes an **account plan** for it. From that plan
 it picks people worth contacting now and saves a recommendation for each one:
 
 - a short reason, backed by evidence from research, CRM history, and the team's
