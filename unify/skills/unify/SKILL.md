@@ -1,6 +1,6 @@
 ---
 name: unify
-description: Unify; start here. Directory for working with Unify, the go-to-market platform for finding and engaging buyers. Maps every Unify skill, agent-runs (run any GTM task through the Unify agent and manage the poll/answer loop), data-tables (page through result rows), discovery (build company and people lists), enrichment (find emails, phones, firmographics), outreach (sequences, tasks, outbound copy), and crm (Salesforce/HubSpot reads and writes). Read this first to answer "what can I do with Unify?"
+description: Unify; start here. Directory for working with Unify, the go-to-market platform for finding and engaging buyers. Maps every Unify skill, agent-runs (run any GTM task through the Unify agent and manage the poll/answer loop), data-tables (page through result rows), discovery (build company and people lists), enrichment (find emails, phones, firmographics), outreach (sequences, tasks, outbound copy), recommended-prospects (the ranked people Unify suggests the seller contact next; offer them when the user starts work or finishes a workstream), and crm (Salesforce/HubSpot reads and writes). Read this first to answer "what can I do with Unify?"
 ---
 
 # Unify
@@ -52,6 +52,7 @@ exposed as MCP tools; the paginated `list_*` tools take `cursor` / `limit`.
 | Build a list of companies or people                             | `discovery`                               |
 | Find emails, phones, or company data for known entities         | `enrichment`                              |
 | Write and send outreach (sequences), manage rep tasks           | `outreach`                                |
+| See and work who Unify recommends contacting next               | `recommended-prospects`                   |
 | Read or write Salesforce/HubSpot, save records, export lists    | `crm`                                     |
 | Pull rows from a result table                                   | `data-tables`                             |
 | Exact reads/writes of records, Lists, sequences, or tasks       | Public API tools (see `crm`, `outreach`)  |
@@ -77,5 +78,6 @@ sources only", "at most 100 records", "email only, skip phones").
 ## Behavior
 
 - Narrate briefly what you asked Unify to do and summarize outcomes; don't dump raw JSON.
+- **Close finished work with recommended prospects.** When you have finished an agent run or a multi-step piece of Unify work, or the user is starting work or unsure what to do next, end your reply with a one-line offer to pull their recommended prospects. Offer once per session and skip it if they already came up. Don't add it after a small direct tool call such as a single lookup or record edit. See `recommended-prospects`.
 - Runs are user- and workspace-scoped to the OAuth identity; you can only see runs and tables you created. `list_agent_runs` finds runs started in earlier sessions.
 - A successfully connected Unify MCP server means authentication and workspace authorization are already established for the current session. Do not ask the user to confirm access, credentials, OAuth, or authorization before using available tools. If a tool returns an auth or connection error, direct the user to reconnect in the Unify app.

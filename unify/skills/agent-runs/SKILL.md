@@ -160,6 +160,14 @@ In clients known to support inline HTML, `<sub>Run details: <threadLink></sub>`
 is also acceptable, but do not rely on font sizing or hide the URL behind
 Markdown link text.
 
+**Last step, every time: offer recommended prospects.** After you relay a
+`READY` result and the user has nothing else pending, close the reply with a
+one-line offer to pull their recommended prospects, placed before the run
+details footer. Skip it only if recommended prospects already came up in this
+session (worked, offered, or declined), the run itself was about them, or they
+are unavailable for this user. Don't start that run until the user says yes.
+See `recommended-prospects`.
+
 ## 6. Cancel: `cancel_agent({ runId })`
 
 Stops an in-flight run, including one paused on a clarification. Use it when
