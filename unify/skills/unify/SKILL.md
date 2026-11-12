@@ -1,6 +1,6 @@
 ---
 name: unify
-description: Unify; start here. Directory for working with Unify, the go-to-market platform for finding and engaging buyers. Maps every Unify skill, agent-runs (run any GTM task through the Unify agent and manage the poll/answer loop), data-tables (page through result rows), discovery (build company and people lists), enrichment (find emails, phones, firmographics), outreach (sequences, tasks, outbound copy), recommended-prospects (the ranked people Unify suggests the seller contact next; offer them when the user starts work or finishes a workstream), and crm (Salesforce/HubSpot reads and writes). Read this first to answer "what can I do with Unify?"
+description: Unify; start here. Directory for working with Unify, the go-to-market platform for finding and engaging buyers. Maps every Unify skill, agent-runs (run any GTM task through the Unify agent and manage the poll/answer loop), data-tables (page through result rows), discovery (build company and people lists), enrichment (find emails, phones, firmographics), outreach (sequences, tasks, outbound copy), book-of-business (the accounts a seller works, their saved intel and account plans), recommended-prospects (the ranked people Unify suggests the seller contact next; offer them when the user starts work or finishes a workstream), and crm (Salesforce/HubSpot reads and writes). Read this first to answer "what can I do with Unify?"
 ---
 
 # Unify
@@ -52,6 +52,7 @@ exposed as MCP tools; the paginated `list_*` tools take `cursor` / `limit`.
 | Build a list of companies or people                             | `discovery`                               |
 | Find emails, phones, or company data for known entities         | `enrichment`                              |
 | Write and send outreach (sequences), manage rep tasks           | `outreach`                                |
+| Work with "my book": accounts, account intel, claiming          | `book-of-business`                        |
 | See and work who Unify recommends contacting next               | `recommended-prospects`                   |
 | Read or write Salesforce/HubSpot, save records, export lists    | `crm`                                     |
 | Pull rows from a result table                                   | `data-tables`                             |
@@ -62,6 +63,7 @@ exposed as MCP tools; the paginated `list_*` tools take `cursor` / `limit`.
 - **DataTable**: the durable table a run creates for multi-row results from list-building or enrichment; page it with `load_datatable`. One-off lookups and counts come back as text.
 - **List**: a saved, named collection of records of one object (for example companies or people) in the Unify app, distinct from a DataTable. Read it with `get_list` / `list_list_entries`.
 - **Sequence**: multi-step outreach built from a reusable **template** of steps, delays, and drafting prompts. In an AI-personalized sequence, adding people creates per-person **drafts** that do NOT send; email sends only after drafts are **enrolled** (started). A **preview** is only the sample copy on a template step. A fixed-template sequence has no drafts and starts sending when people are added.
+- **Book of Business**: the accounts a seller works in Unify; the scope for account intel and recommended prospects. Not the same as CRM ownership.
 - **Persona**: a tenant-level set of job titles defining a buyer role.
 - **Audience** / **Segment**: saved sets of companies or people (Audience) and saved company filters such as territories (Segment) that briefs can reference by name.
 - **Tasks**: a rep's to-do queue: sequence steps (calls, LinkedIn touches, emails, replies) plus one-off tasks.
